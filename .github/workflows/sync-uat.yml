@@ -46,19 +46,13 @@ jobs:
 
       - name: Run containers on server
         run: |
-          ssh "$SSH_USERNAME@$SSH_HOST" bash -s <<EOF
-            set -e
+          ssh -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST << 'ENDSSH'
             cd /home/$SSH_USERNAME/app
-
-            set -a
-            source .env.be
-            set +a
-
+            export $(cat .env.be | xargs)
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
-
-            docker compose down
-            docker compose pull --quiet
-            docker compose up -d
-            docker compose exec django python manage.py migrate --noinput
+            docker-compose down
+            docker-compose pull --quiet
+            docker-compose up -d
+            docker-compose exec -T django python manage.py migrate --noinput
             docker image prune -af
-          EOF
+          ENDSSH
