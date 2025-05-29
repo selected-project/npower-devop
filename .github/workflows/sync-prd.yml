@@ -5,7 +5,7 @@ on:
       - "prd-*"
 
 jobs:
-  deploy:
+  copy:
     runs-on: np-dev-op
     env:
       SSH_USERNAME: ${{ vars.SSH_PRD_USERNAME }}
@@ -31,6 +31,7 @@ jobs:
             mkdir -p /home/$SSH_USERNAME/app &&
             echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be &&
             echo '$ENV_FE' > /home/$SSH_USERNAME/app/.env.fe &&
+            echo '$ENV_WP' > /home/$SSH_USERNAME/app/.env.wp
           "
 
       - name: Copy prd/ excluding nginx to app/ folder on server
@@ -42,21 +43,35 @@ jobs:
           ssh $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/app/nginx && sudo chown $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/app/nginx && sudo chmod ug+w /home/$SSH_USERNAME/app/nginx"
           rsync -az prd/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
 
-      - name: Run containers on server
+  deploy:
+    runs-on: np-dev-op
+    needs: copy
+    env:
+      SSH_USERNAME: ${{ vars.SSH_PRD_USERNAME }}
+      SSH_HOST: ${{ vars.SSH_PRD_HOST }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRD_PRIVATE_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
         run: |
-          ssh "$SSH_USERNAME@$SSH_HOST" <<'EOF'
-            set -e
-            cd /home/$SSH_USERNAME/app
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
 
-            set -a
-            source .env.be
-            set +a
-
+      - name: Run Server
+        run: |
+          ssh -t $SSH_USERNAME@$SSH_HOST << 'ENDSSH'
+            cd ~/app
+            export $(cat .env.be | xargs)
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
-
-            docker compose down           # v2 syntax; or use `docker-compose down`
             docker compose pull --quiet
+            docker compose down
             docker compose up -d
             docker compose exec django python manage.py migrate --noinput
             docker image prune -af
-          EOF
+            docker logout
+          ENDSSH
