@@ -2,7 +2,7 @@ name: Deploy UAT Files to Server
 on:
   push:
     tags:
-      - 'prd-*'
+      - "prd-*"
 
 jobs:
   deploy:
@@ -39,3 +39,14 @@ jobs:
         run: |
           ssh $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/app/nginx && sudo chown $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/app/nginx && sudo chmod ug+w /home/$SSH_USERNAME/app/nginx"
           rsync -az prd/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
+
+      - name: Run Server
+        run: |
+          cd /home/$SSH_USERNAME/app
+          export $(cat .env.be | xargs)
+          echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
+          docker-compose down
+          docker-compose pull --quiet
+          docker-compose up -d
+          docker-compose exec django python manage.py migrate --noinput
+          docker image prune -af
