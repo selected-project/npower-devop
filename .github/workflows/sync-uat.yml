@@ -46,7 +46,7 @@ jobs:
 
       - name: Run containers on server
         run: |
-          ssh "$SSH_USERNAME@$SSH_HOST" <<'EOF'
+          ssh "$SSH_USERNAME@$SSH_HOST" bash -s <<EOF
             set -e
             cd /home/$SSH_USERNAME/app
 
@@ -56,7 +56,7 @@ jobs:
 
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
 
-            docker compose down           # v2 syntax; or use `docker-compose down`
+            docker compose down
             docker compose pull --quiet
             docker compose up -d
             docker compose exec django python manage.py migrate --noinput
