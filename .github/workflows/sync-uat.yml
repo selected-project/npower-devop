@@ -2,7 +2,7 @@ name: Deploy UAT Files to Server
 on:
   push:
     tags:
-      - 'uat-*'
+      - "uat-*"
 
 jobs:
   deploy:
@@ -26,14 +26,14 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
 
-      - name: Create .env.be on server
-        run: ssh $SSH_USERNAME@$SSH_HOST "echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be"
-
-      - name: Create .env.fe on server
-        run: ssh $SSH_USERNAME@$SSH_HOST "echo '$ENV_FE' > /home/$SSH_USERNAME/app/.env.fe"
-
-      - name: Create .env.wp on server
-        run: ssh $SSH_USERNAME@$SSH_HOST "echo '$ENV_WP' > /home/$SSH_USERNAME/app/.env.wp"
+      - name: Upload .env files to server
+        run: |
+          ssh "$SSH_USERNAME@$SSH_HOST" "
+            mkdir -p /home/$SSH_USERNAME/app &&
+            echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be &&
+            echo '$ENV_FE' > /home/$SSH_USERNAME/app/.env.fe &&
+            echo '$ENV_WP' > /home/$SSH_USERNAME/app/.env.wp
+          "
 
       - name: Copy uat/ excluding nginx to app/ folder on server
         run: |
@@ -44,13 +44,21 @@ jobs:
           ssh $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/app/nginx && sudo chown $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/app/nginx && sudo chmod ug+w /home/$SSH_USERNAME/app/nginx"
           rsync -az uat/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
 
-      - name: Run Server
+      - name: Run containers on server
         run: |
-          cd /home/$SSH_USERNAME/app
-          export $(cat .env.be | xargs)
-          echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
-          docker-compose down
-          docker-compose pull --quiet
-          docker-compose up -d
-          docker-compose exec django python manage.py migrate --noinput
-          docker image prune -af
+          ssh "$SSH_USERNAME@$SSH_HOST" <<'EOF'
+            set -e
+            cd /home/$SSH_USERNAME/app
+
+            set -a
+            source .env.be
+            set +a
+
+            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
+
+            docker compose down           # v2 syntax; or use `docker-compose down`
+            docker compose pull --quiet
+            docker compose up -d
+            docker compose exec django python manage.py migrate --noinput
+            docker image prune -af
+          EOF
