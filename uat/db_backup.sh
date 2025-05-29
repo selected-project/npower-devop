@@ -27,7 +27,7 @@ if [ -f "$BACKUP_FILE" ]; then
     if [ $? -eq 0 ]; then
         echo "Backup uploaded to S3 successfully."
         # Optionally, remove the local backup file after successful upload
-        rm "$BACKUP_FILE"
+        rm -rf "$BACKUP_DIR"
     else
         echo "Failed to upload backup to S3."
     fi

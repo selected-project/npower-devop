@@ -6,6 +6,10 @@ on:
 jobs:
   deploy:
     runs-on: np-dev-op
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_USERNAME: ${{ vars.SSH_USERNAME }}
+      SSH_HOST: ${{ vars.SSH_HOST }}
 
     steps:
     - name: Checkout code
@@ -14,10 +18,15 @@ jobs:
     - name: Set up SSH
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
 
-    - name: Copy uat/ to app/ folder on server
+    - name: Copy uat/ excluding nginx to app/ folder on server
       run: |
-        rsync -avz uat/ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/username/app/
+        rsync -rlptDz --exclude 'nginx/' --exclude '**/*.example.env.*' uat/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/
+
+    - name: Copy nginx folder to server
+      run: |
+        ssh $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/app/nginx && sudo chown $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/app/nginx && sudo chmod ug+w /home/$SSH_USERNAME/app/nginx"
+        rsync -az uat/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
