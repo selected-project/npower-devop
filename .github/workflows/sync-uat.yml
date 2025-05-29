@@ -1,8 +1,9 @@
 name: Deploy UAT Files to Server
 on:
   push:
-    branches:
-      - uat
+    tags:
+      - 'uat-*'
+
 jobs:
   deploy:
     runs-on: np-dev-op
