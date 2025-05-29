@@ -5,7 +5,7 @@ on:
       - "uat-*"
 
 jobs:
-  deploy:
+  copy:
     runs-on: np-dev-op
     env:
       SSH_USERNAME: ${{ vars.SSH_USERNAME }}
@@ -44,15 +44,26 @@ jobs:
           ssh $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/app/nginx && sudo chown $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/app/nginx && sudo chmod ug+w /home/$SSH_USERNAME/app/nginx"
           rsync -az uat/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
 
-      - name: Run containers on server
+  deploy:
+    runs-on: np-dev-op
+    needs: copy
+    env:
+      SSH_USERNAME: ${{ vars.SSH_USERNAME }}
+      SSH_HOST: ${{ vars.SSH_HOST }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      ENV_BE: ${{ secrets.ENV_BE }}
+      ENV_FE: ${{ secrets.ENV_FE }}
+      ENV_WP: ${{ secrets.ENV_WP }}
+
+    steps:
+      - name: Run Server
         run: |
-          ssh -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST << 'ENDSSH'
-            cd /home/$SSH_USERNAME/app
-            export $(cat .env.be | xargs)
-            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
-            docker-compose down
-            docker-compose pull --quiet
-            docker-compose up -d
-            docker-compose exec -T django python manage.py migrate --noinput
-            docker image prune -af
-          ENDSSH
+          scp -o StrictHostKeyChecking=no -r ./.env.be $SSH_USERNAME@$SSH_HOST:~/app
+          cd /home/$SSH_USERNAME/app
+          export $(cat .env.be | xargs)
+          echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
+          docker-compose down
+          docker-compose pull --quiet
+          docker-compose up -d
+          docker-compose exec django python manage.py migrate --noinput
+          docker image prune -af
