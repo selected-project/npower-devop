@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Load environment variables from the .env file
-export $(grep -v '^#' .env.uat | xargs)
+export $(grep -v '^#' .env.be | xargs)
 
 # Set up timestamp and backup file name
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")

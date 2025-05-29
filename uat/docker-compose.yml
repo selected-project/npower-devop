@@ -74,4 +74,3 @@ networks:
 volumes:
   static_volume:
   redis_data:
-  certbot-etc:
