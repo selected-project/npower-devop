@@ -68,6 +68,7 @@ jobs:
           ssh -t $SSH_USERNAME@$SSH_HOST << 'ENDSSH'
             cd ~/app
             export $(cat .env.be | xargs)
+            export $(cat .env.wp | xargs)
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
             docker compose pull --quiet
             docker compose down
