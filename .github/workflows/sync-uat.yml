@@ -69,7 +69,7 @@ jobs:
             cd ~/app
             export $(cat .env.be | xargs)
             export $(cat .env.wp | xargs)
-            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
+            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u $SSH_USERNAME --password-stdin
             docker compose pull --quiet
             docker compose down
             docker compose up -d
