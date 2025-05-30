@@ -31,7 +31,6 @@ jobs:
             mkdir -p /home/$SSH_USERNAME/app &&
             echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be &&
             echo '$ENV_FE' > /home/$SSH_USERNAME/app/.env.fe &&
-            echo '$ENV_WP' > /home/$SSH_USERNAME/app/.env.wp
           "
 
       - name: Copy prd/ excluding nginx to app/ folder on server
