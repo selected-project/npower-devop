@@ -12,7 +12,6 @@ jobs:
       SSH_HOST: ${{ vars.SSH_HOST }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       ENV_BE: ${{ secrets.ENV_BE }}
-      ENV_FE: ${{ secrets.ENV_FE }}
       ENV_WP: ${{ secrets.ENV_WP }}
 
     steps:
@@ -31,7 +30,6 @@ jobs:
           ssh "$SSH_USERNAME@$SSH_HOST" "
             mkdir -p /home/$SSH_USERNAME/app &&
             echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be &&
-            echo '$ENV_FE' > /home/$SSH_USERNAME/app/.env.fe &&
             echo '$ENV_WP' > /home/$SSH_USERNAME/app/.env.wp
           "
 

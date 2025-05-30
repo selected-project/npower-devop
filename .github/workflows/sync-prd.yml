@@ -12,7 +12,6 @@ jobs:
       SSH_HOST: ${{ vars.SSH_PRD_HOST }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRD_PRIVATE_KEY }}
       ENV_BE: ${{ secrets.ENV_PRD_BE }}
-      ENV_FE: ${{ secrets.ENV_PRD_FE }}
 
     steps:
       - name: Checkout code
@@ -30,7 +29,6 @@ jobs:
           ssh "$SSH_USERNAME@$SSH_HOST" "
             mkdir -p /home/$SSH_USERNAME/app &&
             echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be &&
-            echo '$ENV_FE' > /home/$SSH_USERNAME/app/.env.fe &&
           "
 
       - name: Copy prd/ excluding nginx to app/ folder on server
