@@ -6,7 +6,7 @@ on:
 
 jobs:
   copy:
-    runs-on: np-dev-op
+    runs-on: ubuntu-latest
     env:
       SSH_USERNAME: ${{ vars.SSH_PRD_USERNAME }}
       SSH_HOST: ${{ vars.SSH_PRD_HOST }}
@@ -41,7 +41,7 @@ jobs:
           rsync -az prd/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
 
   deploy:
-    runs-on: np-dev-op
+    runs-on: ubuntu-latest
     needs: copy
     env:
       SSH_USERNAME: ${{ vars.SSH_PRD_USERNAME }}

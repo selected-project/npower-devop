@@ -48,7 +48,7 @@ jobs:
           rsync -az uat/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
 
   deploy:
-    runs-on: np-dev-op
+    runs-on: ubuntu-latest
     needs: copy
 
     steps:
@@ -61,6 +61,19 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.NPOWER_ACCESS_KEY }}
+          aws-secret-access-key: ${{ env.NPOWER_SECRET_KEY }}
+          aws-region: ${{ env.NPOWER_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Download Frontend Static Files
+        run: |
+          cd uat
+          aws s3api get-object --bucket $AWS_STORAGE_BUCKET_NAME --key frontend_static/dist.tar.gz dist.tar.gz
 
       - name: Run Server
         run: |

@@ -1,12 +1,12 @@
 services:
   nginx:
-    image: nginx:stable-alpine3.21
+    build: .
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/nginx.default.conf:/etc/nginx/conf.d/default.conf
       - ./nginx/keys:/etc/nginx/keys
       - ./wordpress:/var/www/html
-      - /home/npdev1/app/frontend/www/vue-app:/usr/share/nginx/html/vue-app
+      - frontend_dist:/usr/share/nginx/html/vue-app
       - static_volume:/home/app/web/staticfiles
 
     ports:
@@ -72,5 +72,6 @@ networks:
   app-network:
 
 volumes:
+  frontend_dist:
   static_volume:
   redis_data:
