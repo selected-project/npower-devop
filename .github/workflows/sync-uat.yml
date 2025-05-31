@@ -70,6 +70,9 @@ jobs:
           aws-region: ${{ env.NPOWER_REGION }}
           audience: sts.amazonaws.com
 
+      - name: Install AWS CLI
+        uses: aws-actions/aws-cli-action@v1
+
       - name: Download Frontend Static Files
         run: |
           cd uat
