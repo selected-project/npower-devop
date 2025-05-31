@@ -5,7 +5,7 @@ on:
       - "prd-*"
 
 env:
-  SSH_USERNAME: ${{ vars.SSH_PRD_USERNAME }}
+  SSH_USERNAME: ${{ vars.SSH_USERNAME }}
   SSH_HOST: ${{ vars.SSH_PRD_HOST }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   CR_PAT: ${{ secrets.CR_PAT }}
