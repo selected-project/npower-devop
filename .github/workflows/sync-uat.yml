@@ -4,15 +4,20 @@ on:
     tags:
       - "uat-*"
 
+env:
+  SSH_USERNAME: ${{ vars.SSH_USERNAME }}
+  SSH_HOST: ${{ vars.SSH_HOST }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  NPOWER_REGION: ${{ vars.NPOWER_REGION }}
+  NPOWER_ACCESS_KEY: ${{ secrets.NPOWER_ACCESS_KEY }}
+  NPOWER_SECRET_KEY: ${{ secrets.NPOWER_SECRET_KEY }}
+  AWS_STORAGE_BUCKET_NAME: ${{ vars.STAGING_STORAGE_BUCKET_NAME }}
+  ENV_BE: ${{ secrets.ENV_BE }}
+  ENV_WP: ${{ secrets.ENV_WP }}
+
 jobs:
   copy:
     runs-on: np-dev-op
-    env:
-      SSH_USERNAME: ${{ vars.SSH_USERNAME }}
-      SSH_HOST: ${{ vars.SSH_HOST }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      ENV_BE: ${{ secrets.ENV_BE }}
-      ENV_WP: ${{ secrets.ENV_WP }}
 
     steps:
       - name: Checkout code
@@ -45,10 +50,6 @@ jobs:
   deploy:
     runs-on: np-dev-op
     needs: copy
-    env:
-      SSH_USERNAME: ${{ vars.SSH_USERNAME }}
-      SSH_HOST: ${{ vars.SSH_HOST }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     steps:
       - name: Checkout code
