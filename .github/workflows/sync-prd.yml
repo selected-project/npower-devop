@@ -4,14 +4,16 @@ on:
     tags:
       - "prd-*"
 
+env:
+  SSH_USERNAME: ${{ vars.SSH_PRD_USERNAME }}
+  SSH_HOST: ${{ vars.SSH_PRD_HOST }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  CR_PAT: ${{ secrets.CR_PAT }}
+  ENV_BE: ${{ secrets.ENV_PRD_BE }}
+
 jobs:
   copy:
-    runs-on: ubuntu-latest
-    env:
-      SSH_USERNAME: ${{ vars.SSH_PRD_USERNAME }}
-      SSH_HOST: ${{ vars.SSH_PRD_HOST }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRD_PRIVATE_KEY }}
-      ENV_BE: ${{ secrets.ENV_PRD_BE }}
+    runs-on: np-dev-op
 
     steps:
       - name: Checkout code
@@ -20,15 +22,18 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/prd.pem
+          chmod 600 ~/.ssh/prd.pem
+
+          echo "$SSH_HOST" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
       - name: Upload .env files to server
         run: |
-          ssh "$SSH_USERNAME@$SSH_HOST" "
+          ssh -i ~/.ssh/prd.pem -o StrictHostKeyChecking=no "$SSH_USERNAME@$SSH_HOST" "
             mkdir -p /home/$SSH_USERNAME/app &&
-            echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be &&
+            echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be
           "
 
       - name: Copy prd/ excluding nginx to app/ folder on server
@@ -37,16 +42,12 @@ jobs:
 
       - name: Copy nginx folder to server
         run: |
-          ssh $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/app/nginx && sudo chown $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/app/nginx && sudo chmod ug+w /home/$SSH_USERNAME/app/nginx"
+          ssh -i ~/.ssh/prd.pem -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/app/nginx && sudo chown $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/app/nginx && sudo chmod ug+w /home/$SSH_USERNAME/app/nginx"
           rsync -az prd/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: np-dev-op
     needs: copy
-    env:
-      SSH_USERNAME: ${{ vars.SSH_PRD_USERNAME }}
-      SSH_HOST: ${{ vars.SSH_PRD_HOST }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRD_PRIVATE_KEY }}
 
     steps:
       - name: Checkout code
@@ -55,20 +56,24 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
 
-      - name: Run Server
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/prd.pem
+          chmod 600 ~/.ssh/prd.pem
+
+          echo "$SSH_HOST" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Run deploy script
         run: |
-          ssh -t $SSH_USERNAME@$SSH_HOST << 'ENDSSH'
+          ssh -i ~/.ssh/prd.pem -o StrictHostKeyChecking=no "$SSH_USERNAME@$SSH_HOST" << EOF
             cd ~/app
             export $(cat .env.be | xargs)
-            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u USERNAME --password-stdin
+            export $(cat .env.wp | xargs)
+            echo "$CR_PAT" | docker login ghcr.io -u "$SSH_USERNAME" --password-stdin
             docker compose pull --quiet
             docker compose down
             docker compose up -d
             docker compose exec django python manage.py migrate --noinput
-            docker image prune -af
+            docker image prune -a -f
             docker logout
-          ENDSSH
+          EOF
