@@ -71,12 +71,18 @@ jobs:
           echo "$SSH_HOST" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Install AWS CLI
+      - name: Ensure AWS CLI is installed
         run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip -q awscliv2.zip
-          sudo ./aws/install
-          aws --version
+          if ! command -v aws &> /dev/null; then
+            echo "AWS CLI not found. Installing..."
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -q awscliv2.zip
+            sudo ./aws/install
+            rm -rf awscliv2.zip aws
+          else
+            echo "AWS CLI already installed: $(aws --version)"
+          fi
+
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -103,3 +109,6 @@ jobs:
             docker image prune -af
             docker logout
           ENDSSH
+
+      - name: Clean up dist.tar.gz in workspace
+        run: rm -f ./uat/dist.tar.gz
