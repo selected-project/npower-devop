@@ -18,7 +18,6 @@ env:
   cp_source: s3://npower-backend-stag/frontend_static/dist.tar.gz
   cp_destination: ./uat/dist.tar.gz
 
-
 jobs:
   copy:
     runs-on: np-dev-op
@@ -30,13 +29,16 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/uat.pem
+          chmod 600 ~/.ssh/uat.pem
+
+          echo "$SSH_HOST" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
       - name: Upload .env files to server
         run: |
-          ssh "$SSH_USERNAME@$SSH_HOST" "
+          ssh -i ~/.ssh/uat.pem -o StrictHostKeyChecking=no "$SSH_USERNAME@$SSH_HOST" "
             mkdir -p /home/$SSH_USERNAME/app &&
             echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be &&
             echo '$ENV_WP' > /home/$SSH_USERNAME/app/.env.wp
@@ -48,7 +50,7 @@ jobs:
 
       - name: Copy nginx folder to server
         run: |
-          ssh $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/app/nginx && sudo chown $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/app/nginx && sudo chmod ug+w /home/$SSH_USERNAME/app/nginx"
+          ssh -i ~/.ssh/uat.pem -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST "mkdir -p /home/$SSH_USERNAME/app/nginx && sudo chown $SSH_USERNAME:$SSH_USERNAME /home/$SSH_USERNAME/app/nginx && sudo chmod ug+w /home/$SSH_USERNAME/app/nginx"
           rsync -az uat/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
 
   deploy:
@@ -62,16 +64,19 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/uat.pem
+          chmod 600 ~/.ssh/uat.pem
+
+          echo "$SSH_HOST" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ env.NPOWER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ env.NPOWER_SECRET_KEY }}
-          aws-region: ${{ env.NPOWER_REGION }}
+          aws-access-key-id: $NPOWER_ACCESS_KEY
+          aws-secret-access-key: $NPOWER_SECRET_KEY
+          aws-region: $NPOWER_REGION
           audience: sts.amazonaws.com
 
       - name: AWS CLI Command
@@ -81,7 +86,7 @@ jobs:
 
       - name: Run Server
         run: |
-          ssh -t $SSH_USERNAME@$SSH_HOST << 'ENDSSH'
+          ssh -i ~/.ssh/uat.pem -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST << 'ENDSSH'
             cd ~/app
             export $(cat .env.be | xargs)
             export $(cat .env.wp | xargs)
