@@ -1,12 +1,12 @@
 services:
   nginx:
-    build: .
+    image: ghcr.io/xlance-collective/npower-protal:latest
+    container_name: vue-nginx
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/nginx.default.conf:/etc/nginx/conf.d/default.conf
       - ./nginx/keys:/etc/nginx/keys
       - ./wordpress:/var/www/html
-      - frontend_dist:/usr/share/nginx/html/vue-app
       - static_volume:/home/app/web/staticfiles
 
     ports:
@@ -72,6 +72,5 @@ networks:
   app-network:
 
 volumes:
-  frontend_dist:
   static_volume:
   redis_data:

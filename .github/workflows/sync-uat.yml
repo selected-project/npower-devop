@@ -1,22 +1,16 @@
 name: Deploy UAT Files to Server
 on:
   push:
-    tags:
-      - "main"
+    branches:
+      - "devop"
 
 env:
   SSH_USERNAME: ${{ vars.SSH_USERNAME }}
   SSH_HOST: ${{ vars.SSH_HOST }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  NPOWER_REGION: ${{ vars.NPOWER_REGION }}
-  NPOWER_ACCESS_KEY: ${{ secrets.NPOWER_ACCESS_KEY }}
-  NPOWER_SECRET_KEY: ${{ secrets.NPOWER_SECRET_KEY }}
-  AWS_STORAGE_BUCKET_NAME: ${{ vars.STAGING_STORAGE_BUCKET_NAME }}
+  CR_PAT: ${{ secrets.CR_PAT }}
   ENV_BE: ${{ secrets.ENV_BE }}
   ENV_WP: ${{ secrets.ENV_WP }}
-
-  cp_source: s3://npower-backend-stag/frontend_static/dist.tar.gz
-  cp_destination: ./uat/dist.tar.gz
 
 jobs:
   copy:
@@ -71,44 +65,17 @@ jobs:
           echo "$SSH_HOST" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Ensure AWS CLI is installed
+      - name: Run deploy script
         run: |
-          if ! command -v aws &> /dev/null; then
-            echo "AWS CLI not found. Installing..."
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip -q awscliv2.zip
-            sudo ./aws/install
-            rm -rf awscliv2.zip aws
-          else
-            echo "AWS CLI already installed: $(aws --version)"
-          fi
-
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{env.NPOWER_ACCESS_KEY}}
-          aws-secret-access-key: ${{env.NPOWER_SECRET_KEY}}
-          aws-region: ${{env.NPOWER_REGION}}
-          audience: sts.amazonaws.com
-
-      - name: Download dist.tar.gz from S3
-        run: aws s3 cp s3://{{env.AWS_STORAGE_BUCKET_NAME}}/frontend_static/dist.tar.gz ./uat/dist.tar.gz
-
-      - name: Run Server
-        run: |
-          ssh -i ~/.ssh/uat.pem -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST << 'ENDSSH'
+          ssh -i ~/.ssh/uat.pem -o StrictHostKeyChecking=no "$SSH_USERNAME@$SSH_HOST" << EOF
             cd ~/app
             export $(cat .env.be | xargs)
             export $(cat .env.wp | xargs)
-            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u $SSH_USERNAME --password-stdin
+            echo "$CR_PAT" | docker login ghcr.io -u "$SSH_USERNAME" --password-stdin
             docker compose pull --quiet
             docker compose down
             docker compose up -d
             docker compose exec django python manage.py migrate --noinput
-            docker image prune -af
+            docker image prune -a -f
             docker logout
-          ENDSSH
-
-      - name: Clean up dist.tar.gz in workspace
-        run: rm -f ./uat/dist.tar.gz
+          EOF
