@@ -71,6 +71,13 @@ jobs:
           echo "$SSH_HOST" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip -q awscliv2.zip
+          sudo ./aws/install
+          aws --version
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -79,10 +86,8 @@ jobs:
           aws-region: $NPOWER_REGION
           audience: sts.amazonaws.com
 
-      - name: AWS CLI Command
-        uses: nicholasarvelo/aws-cli-commands@v1
-        with:
-          args: s3 cp ${{ env.cp_source }} ${{ env.cp_destination }}
+      - name: Download dist.tar.gz from S3
+        run: aws s3 cp s3://{{env.AWS_STORAGE_BUCKET_NAME}}/frontend_static/dist.tar.gz ./uat/dist.tar.gz
 
       - name: Run Server
         run: |
