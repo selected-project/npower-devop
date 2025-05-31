@@ -1,8 +1,8 @@
 name: Deploy UAT Files to Server
 on:
   push:
-    branches:
-      - "devop"
+    tags:
+      - "uat-*"
 
 env:
   SSH_USERNAME: ${{ vars.SSH_USERNAME }}
