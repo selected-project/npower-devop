@@ -48,7 +48,7 @@ jobs:
           rsync -az uat/nginx/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/nginx/
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: np-dev-op
     needs: copy
 
     steps:
