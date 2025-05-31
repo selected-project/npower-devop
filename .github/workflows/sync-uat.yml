@@ -15,6 +15,10 @@ env:
   ENV_BE: ${{ secrets.ENV_BE }}
   ENV_WP: ${{ secrets.ENV_WP }}
 
+  cp_source: s3://npower-backend-stag/frontend_static/dist.tar.gz
+  cp_destination: ./uat/dist.tar.gz
+
+
 jobs:
   copy:
     runs-on: np-dev-op
@@ -70,13 +74,10 @@ jobs:
           aws-region: ${{ env.NPOWER_REGION }}
           audience: sts.amazonaws.com
 
-      - name: Install AWS CLI
-        uses: aws-actions/aws-cli-action@v1
-
-      - name: Download Frontend Static Files
-        run: |
-          cd uat
-          aws s3api get-object --bucket $AWS_STORAGE_BUCKET_NAME --key frontend_static/dist.tar.gz dist.tar.gz
+      - name: AWS CLI Command
+        uses: nicholasarvelo/aws-cli-commands@v1
+        with:
+          args: s3 cp ${{ env.cp_source }} ${{ env.cp_destination }}
 
       - name: Run Server
         run: |
