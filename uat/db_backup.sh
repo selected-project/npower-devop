@@ -4,9 +4,10 @@
 export $(grep -v '^#' .env.be | xargs)
 
 # Set up timestamp and backup file name
-TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+DATE=$(date +"%Y_%m_%d")
+TIME=$(date +"%H_%M")
 BACKUP_DIR="./backups"
-BACKUP_FILE="$BACKUP_DIR/$POSTGRES_DB-$TIMESTAMP.sql.gz"
+BACKUP_FILE="$BACKUP_DIR/dump.sql.gz"
 
 # Create backup directory if it doesn't exist
 mkdir -p "$BACKUP_DIR"
@@ -21,7 +22,7 @@ if [ -f "$BACKUP_FILE" ]; then
 
     # Upload the backup file to S3
     echo "Uploading backup to S3 bucket: $AWS_STORAGE_BUCKET_NAME"
-    aws s3 cp "$BACKUP_FILE" "s3://$AWS_STORAGE_BUCKET_NAME/" --region "$AWS_S3_REGION_NAME"
+    aws s3 cp "$BACKUP_FILE" "s3://$AWS_STORAGE_BUCKET_NAME/$DATE/$TIME/" --region "$AWS_S3_REGION_NAME"
 
     # Check if the upload was successful
     if [ $? -eq 0 ]; then
