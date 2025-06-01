@@ -7,7 +7,7 @@ on:
 env:
   SSH_USERNAME: ${{ vars.SSH_USERNAME }}
   SSH_HOST: ${{ vars.SSH_PRD_HOST }}
-  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRD_PRIVATE_KEY }}
   CR_PAT: ${{ secrets.CR_PAT }}
   ENV_BE: ${{ secrets.ENV_PRD_BE }}
 
