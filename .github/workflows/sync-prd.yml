@@ -38,7 +38,11 @@ jobs:
 
       - name: Copy prd/ excluding nginx to app/ folder on server
         run: |
-          rsync -rlptDz --exclude 'nginx/' --exclude '**/*.example.env.*' prd/ $SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/
+          rsync -rlptDz \
+                  --exclude 'nginx/' \
+                  --exclude '**/*.example.env.*' \
+                  -e "ssh -i ~/.ssh/prd.pem -o StrictHostKeyChecking=no" \
+                  prd/  "$SSH_USERNAME@$SSH_HOST:/home/$SSH_USERNAME/app/"
 
       - name: Copy nginx folder to server
         run: |
