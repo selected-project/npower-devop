@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: ghcr.io/xlance-collective/npower-protal:latest
+    image: ghcr.io/xlance-collective/npower-protal:uat-latest
     container_name: vue-nginx
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
