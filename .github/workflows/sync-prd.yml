@@ -1,4 +1,4 @@
-name: Deploy UAT Files to Server
+name: Deploy PRD Files to Server
 on:
   push:
     branches:
@@ -72,12 +72,11 @@ jobs:
           ssh -i ~/.ssh/prd.pem -o StrictHostKeyChecking=no "$SSH_USERNAME@$SSH_HOST" << EOF
             cd ~/app
             export $(cat .env.be | xargs)
-            export $(cat .env.wp | xargs)
             echo "$CR_PAT" | docker login ghcr.io -u "$SSH_USERNAME" --password-stdin
             docker compose pull --quiet
             docker compose down
             docker compose up -d
             docker compose exec django python manage.py migrate --noinput
-            docker image prune -a -f
+            docker system prune -a -f
             docker logout
           EOF

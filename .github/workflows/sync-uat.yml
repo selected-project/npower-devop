@@ -80,6 +80,6 @@ jobs:
             docker compose down
             docker compose up -d
             docker compose exec django python manage.py migrate --noinput
-            docker image prune -a -f
+            docker system prune -a -f
             docker logout
           EOF
