@@ -2,7 +2,7 @@ name: Deploy UAT Files to Server
 on:
   push:
     branches:
-      - "uat"
+      - "main"
 
 env:
   SSH_USERNAME: ${{ vars.SSH_USERNAME }}
