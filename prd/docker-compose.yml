@@ -30,6 +30,28 @@ services:
     networks:
       - app-network
 
+  celery:
+    image: ghcr.io/xlance-collective/npower-backend:latest
+    container_name: celery
+    command: celery -A configs worker -l info
+    depends_on:
+      - redis
+    env_file:
+      - ./.env.be
+    networks:
+      - app-network
+
+  beat:
+    image: ghcr.io/xlance-collective/npower-backend:latest
+    container_name: beat
+    command: celery -A configs beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      - redis
+    env_file:
+      - ./.env.be
+    networks:
+      - app-network
+
   redis:
     container_name: redis
     image: redis/redis-stack-server:7.4.0-v5
