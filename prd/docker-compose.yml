@@ -21,6 +21,8 @@ services:
     container_name: django-dev
     volumes:
       - static_volume:/home/app/web/staticfiles
+      - ./gemini-cred.json:/home/app/web/gemini-cred.json
+      - ./firebase-cred.json:/home/app/web/firebase-cred.json
     depends_on:
       - redis
     expose:
@@ -34,6 +36,9 @@ services:
     image: ghcr.io/xlance-collective/npower-backend:latest
     container_name: celery
     command: celery -A configs worker -l info
+    volumes:
+      - ./gemini-cred.json:/home/app/web/gemini-cred.json
+      - ./firebase-cred.json:/home/app/web/firebase-cred.json
     depends_on:
       - redis
     env_file:
@@ -45,6 +50,9 @@ services:
     image: ghcr.io/xlance-collective/npower-backend:latest
     container_name: beat
     command: celery -A configs beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./gemini-cred.json:/home/app/web/gemini-cred.json
+      - ./firebase-cred.json:/home/app/web/firebase-cred.json
     depends_on:
       - redis
     env_file:
