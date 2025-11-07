@@ -2,7 +2,7 @@ name: Deploy PRD Files to Server
 on:
   push:
     tags:
-      - "prod-8"
+      - "prod-*"
 
 env:
   SSH_USERNAME: ${{ vars.SSH_USERNAME }}
