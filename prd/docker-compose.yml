@@ -13,7 +13,6 @@ services:
       - 443:443
     depends_on:
       - django
-      - flask-dev
     networks:
       - app-network
 
@@ -71,39 +70,9 @@ services:
     networks:
       - app-network
 
-  flask-dev:
-    image: ghcr.io/xlance-collective/flask-dev:latest
-    container_name: flask-dev
-    command: python server.py
-    env_file:
-      - .env.be
-    depends_on:
-      - chromadb
-    ports:
-      - "5000:5000"
-    volumes:
-      - static_volume:/home/app/web/staticfiles
-    networks:
-      - app-network
-
-
-  chromadb:
-    image: chromadb/chroma:latest
-    container_name: chromadb
-    restart: on-failure
-    env_file:
-      - .env.be
-    ports:
-      - "8000:8000"
-    volumes:
-      - chromadb_data:/data
-    networks:
-      - app-network
-
 networks:
   app-network:
 
 volumes:
   static_volume:
   redis_data:
-  chromadb_data:

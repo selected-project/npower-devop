@@ -2,7 +2,7 @@ name: Deploy PRD Files to Server
 on:
   push:
     tags:
-      - "prod-8"
+      - "prod-*"
 
 env:
   SSH_USERNAME: ${{ vars.SSH_USERNAME }}
@@ -10,7 +10,6 @@ env:
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRD_PRIVATE_KEY }}
   CR_PAT: ${{ secrets.CR_PAT }}
   ENV_BE: ${{ secrets.ENV_PRD_BE }}
-  ENV_FK: ${{ secrets.ENV_PRD_FK }}
 
 jobs:
   copy:
@@ -35,7 +34,6 @@ jobs:
           ssh -i ~/.ssh/prd.pem -o StrictHostKeyChecking=no "$SSH_USERNAME@$SSH_HOST" "
             mkdir -p /home/$SSH_USERNAME/app &&
             echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be
-            echo '$ENV_FK' > /home/$SSH_USERNAME/app/.env.fk
           "
 
       - name: Copy prd/ excluding nginx to app/ folder on server
