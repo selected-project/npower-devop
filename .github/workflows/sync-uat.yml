@@ -11,6 +11,7 @@ env:
   CR_PAT: ${{ secrets.CR_PAT }}
   ENV_BE: ${{ secrets.ENV_BE }}
   ENV_WP: ${{ secrets.ENV_WP }}
+  ENV_FK: ${{ secrets.ENV_FK }}
 
 jobs:
   copy:
@@ -36,6 +37,7 @@ jobs:
             mkdir -p /home/$SSH_USERNAME/app &&
             echo '$ENV_BE' > /home/$SSH_USERNAME/app/.env.be &&
             echo '$ENV_WP' > /home/$SSH_USERNAME/app/.env.wp
+            echo '$ENV_FK' > /home/$SSH_USERNAME/app/.env.fk
           "
 
       - name: Copy uat/ excluding nginx to app/ folder on server
@@ -75,6 +77,7 @@ jobs:
             cd ~/app
             export $(cat .env.be | xargs)
             export $(cat .env.wp | xargs)
+            export $(cat .env.fk | xargs)
             echo "$CR_PAT" | docker login ghcr.io -u "$SSH_USERNAME" --password-stdin
             docker compose pull --quiet
             docker compose down
