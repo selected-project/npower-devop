@@ -74,9 +74,8 @@ services:
   flask-dev:
     image: ghcr.io/xlance-collective/flask-dev:latest
     container_name: flask-dev
-    command: python server.py
     env_file:
-      - .env.fk
+      - ./.env.fk
     depends_on:
       - chromadb
     ports:
@@ -92,7 +91,7 @@ services:
     container_name: chromadb
     restart: on-failure
     env_file:
-      - .env.fk
+      - ./.env.fk
     ports:
       - "8000:8000"
     volumes:
