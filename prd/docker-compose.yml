@@ -76,7 +76,7 @@ services:
     container_name: flask-dev
     command: python server.py
     env_file:
-      - .env.be
+      - .env.fk
     depends_on:
       - chromadb
     ports:
@@ -92,7 +92,7 @@ services:
     container_name: chromadb
     restart: on-failure
     env_file:
-      - .env.be
+      - .env.fk
     ports:
       - "8000:8000"
     volumes:
