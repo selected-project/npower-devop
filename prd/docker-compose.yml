@@ -2,6 +2,7 @@ services:
   nginx:
     image: ghcr.io/xlance-collective/npower-protal:prd-latest
     container_name: vue-nginx
+    restart: always
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/nginx.default.conf:/etc/nginx/conf.d/default.conf
@@ -20,6 +21,7 @@ services:
   django:
     image: ghcr.io/xlance-collective/npower-backend:latest
     container_name: django-dev
+    restart: always
     volumes:
       - static_volume:/home/app/web/staticfiles
       - ./gemini-cred.json:/home/app/web/gemini-cred.json
@@ -36,6 +38,7 @@ services:
   celery:
     image: ghcr.io/xlance-collective/npower-backend:latest
     container_name: celery
+    restart: always
     command: celery -A configs worker -l info
     volumes:
       - ./gemini-cred.json:/home/app/web/gemini-cred.json
@@ -50,6 +53,7 @@ services:
   beat:
     image: ghcr.io/xlance-collective/npower-backend:latest
     container_name: beat
+    restart: always
     command: celery -A configs beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - ./gemini-cred.json:/home/app/web/gemini-cred.json
@@ -64,6 +68,7 @@ services:
   redis:
     container_name: redis
     image: redis/redis-stack-server:7.4.0-v5
+    restart: always
     ports:
       - "6379:6379"
     volumes:
@@ -74,6 +79,7 @@ services:
   flask-dev:
     image: ghcr.io/xlance-collective/flask-dev:latest
     container_name: flask-dev
+    restart: always
     env_file:
       - ./.env.fk
     depends_on:
